@@ -1,0 +1,107 @@
+django-trainee
+Question 1: Are Django signals executed synchronously or asynchronously by default?
+Answer:
+By default, Django signals are executed synchronously.
+
+Code Snippet
+This code snippet simulates a time delay in the signal handler and observes whether the sender waits for the signal to complete.
+
+python
+Copy code
+import time 
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+@receiver(post_save, sender=User)
+def signal_handler(sender, instance, **kwargs):
+    print("Signal received. Processing...")
+    time.sleep(5) 
+    print("Signal processing complete.")
+
+def create_user():
+    print("Creating user...")
+    User.objects.create(username='sahil')
+    print("User created!")
+
+create_user()
+Explanation:
+The signal_handler sleeps for 5 seconds. If signals were asynchronous, the User.objects.create() would not wait for this delay and would print "User created!" immediately. But since Django signals are synchronous, it waits for the signal handler to complete its processing before moving on.
+
+Question 2: Do Django signals run in the same thread as the caller?
+Answer:
+Yes, by default, Django signals run in the same thread as the caller.
+
+Code Snippet
+python
+Copy code
+import threading
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+@receiver(post_save, sender=User)
+def signal_handler(sender, instance, **kwargs):
+    print(f"Signal running in thread: {threading.current_thread().name}")
+
+def create_user():
+    print(f"Caller running in thread: {threading.current_thread().name}")
+    User.objects.create(username='sahil')
+
+create_user()
+Explanation:
+This code prints the thread name in both the signal handler and the function that creates the user. If the signal handler runs in the same thread, both should print the same thread name. Since Django signals are synchronous, they will run in the same thread by default.
+
+Question 3: Do Django signals run in the same database transaction as the caller?
+Answer:
+Yes, Django signals can run in the same database transaction as the caller by default, depending on when the signal is triggered.
+
+Code Snippet
+python
+Copy code
+from django.db import transaction
+from django.db.models.signals import post_save
+from django.dispatch import receiver
+from django.contrib.auth.models import User
+
+@receiver(post_save, sender=User)
+def signal_handler(sender, instance, **kwargs):
+    print("Signal triggered.")
+    print(f"Transaction status: {transaction.get_connection().in_atomic_block}")
+
+def create_user():
+    with transaction.atomic():
+        print("Creating user within a transaction...")
+        User.objects.create(username='sahil')
+        print("User created inside transaction!")
+
+create_user()
+Explanation:
+This code wraps the user creation in an atomic transaction. Inside the signal handler, we check if the code is running inside a transaction using transaction.get_connection().in_atomic_block. Since post_save signals occur after saving the object, it will print True, confirming that the signal is running in the same transaction.
+
+Custom Classes in Python
+Task: Create a Rectangle class that allows iteration over its length and width.
+Requirements:
+An instance of Rectangle requires length: int and width: int to initialize.
+We can iterate over an instance of Rectangle.
+The iteration should first return {'length': <VALUE_OF_LENGTH>} and then {'width': <VALUE_OF_WIDTH>}.
+Code Snippet
+python
+Copy code
+class Rectangle:
+    def __init__(self, length: int, width: int):
+        self.length = length
+        self.width = width
+
+    def dimensions(self):
+        return [{'length': self.length}, {'width': self.width}]
+
+rectangle = Rectangle(length=5, width=3)
+
+for i in rectangle.dimensions():
+    print(i)
+Output:
+css
+Copy code
+{'length': 5}
+{'width': 3}
